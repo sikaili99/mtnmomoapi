@@ -1,20 +1,20 @@
-from os import stat
 from mtnmomo.collection import Collection
 from mtnmomo.disbursement import Disbursement
 
 def collection_example(amount,mobile_number):
 
     response = Collection.requestToPay(amount,mobile_number)
-    status = Collection.getTransactionStatus(response['transaction_ref'])
-    if status['status'] == "SUCCESS":
+    pay_status = Collection.getTransactionStatus(response['transaction_ref'])
+    if pay_status['status'] == "SUCCESS":
         pass #Do something here
 
-    return status['status']
+    return pay_status['status']
 
 def disbursement_example(amount,mobile_number):
     response = Disbursement.transfer(amount,mobile_number)
-    status = Disbursement.getTransactionStatus(response['transaction_ref'])
-    if status['status'] == "SUCCESS":
+    transfer_status = Disbursement.getTransactionStatus(response['transaction_ref'])
+    if transfer_status['status'] == "SUCCESS":
         pass #Do something here
 
-    return status['status']
+    return transfer_status['status']
+
