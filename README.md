@@ -1,18 +1,18 @@
 # MTN MoMo API Lite Python Client</h1>
 
-<strong>Power your apps with Lite MTN MoMo API</strong>
+<strong>Power your apps with Lite-Python MTN MoMo API</strong>
 
 # Usage
 
 ## Installation
 
-Add the latest version of the library to your project using pip:
+Add the latest version of the library to your project:
 
 ```bash
- $ pip install mtnmomo
+ $ git clone https://github.com/Mathewsmusukuma/lite-python-mtnmomo-api.git
 ```
 
-This library supports Python 2.7+ or Python 3.4+ (PyPy supported)
+This library supports Python 2.7+ or Python 3.4+
 
 # Sandbox Environment
 
@@ -110,7 +110,7 @@ client = Collection({
 })
 
 client.requestToPay(
-    mobile="256772123456", amount="600", external_id="123456789", payee_note="dd", payer_message="dd", currency="EUR")
+    mobile="0966456787", amount="600", external_id="123456789", payee_note="dd", payer_message="dd", currency="EUR")
 ```
 
 ## Disbursement
@@ -156,8 +156,10 @@ client = Disbursement({
     "DISBURSEMENT_PRIMARY_KEY": os.environ.get("DISBURSEMENT_PRIMARY_KEY"),
 })
 
-client.transfer(amount="600", mobile="256772123456", external_id="123456789", payee_note="dd",      payer_message="dd", currency="EUR")
+client.transfer(amount="600", mobile="0966456787", external_id="123456789", payee_note="dd",      payer_message="dd", currency="EUR")
 
 ```
+## Credit 
+This repo was forked <a hre="#">Sparkplug</a> and modified to work well for MTN Zambia momo.
 
 Thank you.
