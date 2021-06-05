@@ -160,6 +160,6 @@ client.transfer(amount="600", mobile="0966456787", external_id="123456789", paye
 
 ```
 ## Credit 
-This repo was forked <a hre="#">Sparkplug</a> and modified to work well for MTN Zambia momo.
+This repo was forked <a hre="https://github.com/sparkplug">Sparkplug</a> and modified to work well for MTN Zambia and MTN momo in other countries.
 
 Thank you.
