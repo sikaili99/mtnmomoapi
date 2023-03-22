@@ -9,7 +9,7 @@
 Add the latest version of the library to your project:
 
 ```bash
- $ git clone https://github.com/Mathewsmusukuma/lite-python-mtnmomo-api.git
+ $ git clone https://github.com/sikaili99/lite-python-mtnmomo-api.git
 ```
 
 This library supports Python 2.7+ or Python 3.4+
@@ -23,7 +23,7 @@ Next, we need to get the `User ID` and `User Secret` and to do this we shall nee
 ```bash
 ## within the project, on the command line. In this example, our domain is akabbo.ug
 $ mtnmomo
-$ providerCallBackHost: https://akabbo.ug
+$ providerCallBackHost: https://appcolab.io
 $ Ocp-Apim-Subscription-Key: f83xx8d8xx6749f19a26e2265aeadbcdeg
 ```
 
