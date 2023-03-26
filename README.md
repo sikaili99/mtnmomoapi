@@ -9,7 +9,7 @@
 Add the latest version of the library to your project:
 
 ```bash
- $ git clone https://github.com/sikaili99/lite-python-mtnmomo-api.git
+ $ pip install lite-mtnmomo
 ```
 
 This library supports Python 2.7+ or Python 3.4+
