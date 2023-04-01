@@ -1,6 +1,6 @@
-# MTN MoMo API Lite Python Client</h1>
+# MTN MoMo API Python Client</h1>
 
-<strong>Power your apps with Lite-Python MTN MoMo API</strong>
+<strong>Power your apps with Python MTN MoMo API</strong>
 
 # Usage
 
@@ -9,7 +9,7 @@
 Add the latest version of the library to your project:
 
 ```bash
- $ pip install lite-mtnmomo
+ $ pip install mtnmomoapi
 ```
 
 This library supports Python 2.7+ or Python 3.4+
@@ -19,19 +19,6 @@ This library supports Python 2.7+ or Python 3.4+
 ## Creating a sandbox environment API user 
 
 Next, we need to get the `User ID` and `User Secret` and to do this we shall need to use the Primary Key for the Product to which we are subscribed, as well as specify a host. The library ships with a commandline application that helps to create sandbox credentials. It assumes you have created an account on `https://momodeveloper.mtn.com` and have your `Ocp-Apim-Subscription-Key`. 
-
-```bash
-## within the project, on the command line. In this example, our domain is akabbo.ug
-$ mtnmomo
-$ providerCallBackHost: https://appcolab.io
-$ Ocp-Apim-Subscription-Key: f83xx8d8xx6749f19a26e2265aeadbcdeg
-```
-
-The `providerCallBackHost` is your callback host and `Ocp-Apim-Subscription-Key` is your API key for the specific product to which you are subscribed. The `API Key` is unique to the product and you will need an `API Key` for each product you use. You should get a response similar to the following:
-
-```bash
-Here is your User Id and API secret : {'apiKey': 'b0431db58a9b41faa8f5860230xxxxxx', 'UserId': '053c6dea-dd68-xxxx-xxxx-c830dac9f401'}
-```
 
 These are the credentials we shall use for the sandbox environment. In production, these credentials are provided for you on the MTN OVA management dashboard after KYC requirements are met.
 
@@ -80,11 +67,7 @@ You can create a collection client with the following:
 import os
 from mtnmomo.collection import Collection
 
-client = Collection({
-        "COLLECTION_USER_ID": os.environ.get("COLLECTION_USER_ID"),
-        "COLLECTION_API_SECRET": os.environ.get("COLLECTION_API_SECRET"),
-        "COLLECTION_PRIMARY_KEY": os.environ.get("COLLECTION_PRIMARY_KEY"),
-    })
+client = Collection()
 ```
 
 ### Methods
@@ -95,7 +78,9 @@ client = Collection({
 
 3. `getBalance`: Get the balance of the account.
 
-4. `isPayerActive`: check if an account holder is registered and active in the system.
+### TODO: create this methode
+
+`isPayerActive`: check if an account holder is registered and active in the system.
 
 ### Sample Code
 
@@ -103,14 +88,9 @@ client = Collection({
 import os
 from mtnmomo.collection import Collection
 
-client = Collection({
-    "COLLECTION_USER_ID": os.environ.get("COLLECTION_USER_ID"),
-    "COLLECTION_API_SECRET": os.environ.get("COLLECTION_API_SECRET"),
-    "COLLECTION_PRIMARY_KEY": os.environ.get("COLLECTION_PRIMARY_KEY"),
-})
+client = Collection()
 
-client.requestToPay(
-    mobile="0966456787", amount="600", external_id="123456789", payee_note="dd", payer_message="dd", currency="EUR")
+response = client.requestToPay(amount="600", phone_number="0966456787", external_id="123456789", payee_note="dd", payer_message="dd", currency="EUR")
 ```
 
 ## Disbursement
@@ -127,11 +107,7 @@ You can create a disbursements client with the following
 import os
 from mtnmomo.disbursement import Disbursement
 
-client = Disbursement({
-    "DISBURSEMENT_USER_ID": os.environ.get("DISBURSEMENT_USER_ID"),
-    "DISBURSEMENT_API_SECRET": os.environ.get("DISBURSEMENT_API_SECRET"),
-    "DISBURSEMENT_PRIMARY_KEY": os.environ.get("DISBURSEMENT_PRIMARY_KEY"),
-})
+client = Disbursement()
 ```
 
 ### Methods
@@ -142,7 +118,9 @@ client = Disbursement({
 
 2. `getBalance`: Get your account balance.
 
-3. `isPayerActive`: This method is used to check if an account holder is registered and active in the system.
+### TODO: create this methode
+
+`isPayerActive`: This method is used to check if an account holder is registered and active in the system.
 
 #### Sample Code
 
@@ -150,16 +128,9 @@ client = Disbursement({
 import os
 from mtnmomo.disbursement import Disbursement
 
-client = Disbursement({
-    "DISBURSEMENT_USER_ID": os.environ.get("DISBURSEMENT_USER_ID"),
-    "DISBURSEMENT_API_SECRET": os.environ.get("DISBURSEMENT_API_SECRET"),
-    "DISBURSEMENT_PRIMARY_KEY": os.environ.get("DISBURSEMENT_PRIMARY_KEY"),
-})
-
-client.transfer(amount="600", mobile="0966456787", external_id="123456789", payee_note="dd",      payer_message="dd", currency="EUR")
+client = Disbursement()
+response = client.transfer(amount="600", phone_number="0966456787", external_id="123456789", payee_note="dd",      payer_message="dd", currency="EUR")
 
 ```
-## Credit 
-This repo was forked <a hre="https://github.com/sparkplug">Sparkplug</a> and modified to work well for MTN Zambia and MTN momo in other countries.
 
-Thank you.
+Keep coding!

@@ -1,64 +1,104 @@
-import uuid
-
-from .client import MomoApi
-from .utils import validate_phone_number
 import os
+from uuid import uuid4
+import requests
+import json
+from uuid import uuid4
+from basicauth import encode
 
 
-class Collection(MomoApi, object):
-    def getAuthToken(self):
-        """
-             Create an  access token which can then be used
-        to authorize and authenticate towards the other end-points of the API
-        """
-        url = "/collection/token/"
-        response = super(Collection, self).getAuthToken(
-            "COLLECTION", url, super(Collection, self).config.collectionsKey)
+class Collection:
+    def __init__(self):
+        self.collections_primary_key = os.environ.get('COLLECTION_PRIMARY_KEY')
+        self.api_key_collections = os.environ.get('COLLECTION_API_SECRET')
+        self.collections_apiuser = os.environ.get('COLLECTION_USER_ID')
+        self.environment_mode = os.environ.get('ENVIRONMENT')
+        self.accurl = "https://proxy.momoapi.mtn.com"
+        if self.environment_mode == "sandbox":
+            self.accurl = "https://sandbox.momodeveloper.mtn.com"
+
+        # Generate Basic authorization key when in test mode
+        if self.environment_mode == "sandbox":
+            self.collections_apiuser = str(uuid4())
+
+        # Create API user
+        self.url = f"{self.accurl}/v1_0/apiuser"
+        payload = json.dumps({
+            "providerCallbackHost": os.environ.get('')
+        })
+        self.headers = {
+            'X-Reference-Id': self.collections_apiuser,
+            'Content-Type': 'application/json',
+            'Ocp-Apim-Subscription-Key': self.collections_primary_key
+        }
+        response = requests.post(self.url, headers=self.headers, data=payload)
+
+        # Auto-generate when in test mode
+        if self.environment_mode == "sandbox":
+            self.api_key_collections = str(response["apiKey"])
+
+        # Create basic key for Collections
+        self.username, self.password = self.collections_apiuser, self.api_key_collections
+        self.basic_authorisation_collections = str(encode(self.username, self.password))
+
+    def authToken(self):
+        url = f"{self.accurl}/collection/token/"
+        payload = {}
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.collections_primary_key,
+            'Authorization': self.basic_authorisation_collections
+        }
+        response = requests.post(url, headers=headers, data=payload).json()
         return response
 
-    def getBalance(self):
-        url = "/collection/v1_0/account/balance"
-
-        return super(Collection, self).getBalance(url, super(Collection, self).config.collectionsKey)
-
-    def getTransactionStatus(
-            self,
-            transaction_id,
-            **kwargs):
-        url = "/collection/v1_0/requesttopay/"
-
-        return super(Collection, self).getTransactionStatus(
-            transaction_id, url, super(Collection, self).config.collectionsKey)
-
-    def requestToPay(
-            self,
-            mobile,
-            amount,
-            external_id,
-            payee_note="",
-            payer_message="",
-            currency=os.environ.get("CURRENCY"),
-            **kwargs): 
-        ref = str(uuid.uuid4())
-        data = {
+    def requestToPay(self, amount, phone_number, external_id,payernote="SPARCO", payermessage="SPARCOPAY"):
+        uuidgen = str(uuid4())
+        url = f"{self.accurl}/collection/v1_0/requesttopay"
+        payload = json.dumps({
+            "amount": amount,
+            "currency": os.environ.get('CURRENCY'),
+            "externalId": external_id,
             "payer": {
                 "partyIdType": "MSISDN",
-                "partyId": validate_phone_number(mobile)},
-            "payeeNote": payee_note,
-            "payerMessage": payer_message,
-            "externalId": external_id,
-            "currency": currency,
-            "amount": str(amount)}
+                "partyId": phone_number
+            },
+            "payerMessage": payermessage,
+            "payeeNote": payernote
+        })
         headers = {
-            "X-Target-Environment": super(Collection, self).config.environment,
-            "Content-Type": "application/json",
-            "X-Reference-Id": ref,
-            "Ocp-Apim-Subscription-Key": super(Collection, self).config.collectionsKey
-
-
+            'X-Reference-Id': uuidgen,
+            'X-Target-Environment': self.environment_mode,
+            'Ocp-Apim-Subscription-Key': self.collections_primary_key,
+            'Content-Type': 'application/json',
+            'Authorization': "Bearer " + str(self.authToken()["access_token"])
         }
-        if kwargs.get("callback_url"):
-            headers["X-Callback-Url"] = kwargs.get("callback_url")
-        url = "{0}/collection/v1_0/requesttopay".format(super(Collection, self).config.baseUrl)
-        self.request("POST", url, headers, data)
-        return {"transaction_ref": ref}
+        response = requests.post(url, headers=headers, data=payload)
+
+        context = {"status_code": response.status_code,"ref": uuidgen}
+        return context
+
+    def getTransactionStatus(self, txn):
+        url = f"{self.accurl}/collection/v1_0/requesttopay/{txn}"
+        payload = {}
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.collections_primary_key,
+        'Authorization': f"Bearer {self.authToken()['access_token']}",
+            'X-Target-Environment': self.environment_mode,
+        }
+        response = requests.request("GET", url, headers=headers, data=payload)
+        json_respon = response.json()
+        print("MTN request to pay status: ", json_respon)
+        return json_respon
+
+    # Check momo collections balance
+    def getBalance(self):
+        url = f"{self.accurl}/collection/v1_0/account/balance"
+        payload = {}
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.collections_primary_key,
+            'Authorization':  f"Bearer {self.authToken()['access_token']}",
+            'X-Target-Environment': self.environment_mode,
+        }
+        response = requests.request("GET", url, headers=headers, data=payload)
+        json_respon = response.json()
+        return json_respon
+    

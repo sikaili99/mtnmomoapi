@@ -1,63 +1,117 @@
-from .client import MomoApi
-import uuid
-from .utils import validate_phone_number
 import os
+import json
+import requests
+from uuid import uuid4
+from basicauth import encode
 
 
-class Disbursement(MomoApi, object):
+class Disbursement:
+    def __init__(self):
+        self.disbursements_primary_key = os.environ('DISBURSEMENT_PRIMARY_KEY')
+        self.disbursements_apiuser = os.environ('DISBURSEMENT_USER_ID')
+        self.api_key_disbursements = os.environ('DISBURSEMENT_API_SECRET')
+        self.environment_mode = os.environ.get('ENVIRONMENT')
+        self.base_url = os.environ.get('BASE_URL')
 
-    def getAuthToken(self):
-        """
-           Create an access token which can then be used to authorize and authenticate towards the other end-points of the API.
-        """
-        url = "/disbursement/token/"
-        response = super(Disbursement, self).getAuthToken(
-            "DISBURSEMENT", url, super(Disbursement, self).config.disbursementsKey)
+        if self.environment_mode == "sandbox":
+            self.base_url = "https://sandbox.momodeveloper.mtn.com"
+
+        # Generate Basic authorization key when in test mode
+        if self.environment_mode == "sandbox":
+            self.disbursements_apiuser = str(uuid4())
+
+        # Create API user
+        self.url = f"{self.accurl}/v1_0/apiuser"
+        payload = json.dumps({
+            "providerCallbackHost": os.environ.get('')
+        })
+        self.headers = {
+            'X-Reference-Id': self.disbursements_apiuser,
+            'Content-Type': 'application/json',
+            'Ocp-Apim-Subscription-Key': self.disbursements_primary_key
+        }
+        response = requests.post(self.url, headers=self.headers, data=payload)
+
+        # Auto-generate when in test mode
+        if self.environment_mode == "sandbox":
+            self.api_key_disbursements = str(response["apiKey"])
+
+        # Create basic key for disbursements
+        self.username, self.password = self.disbursements_apiuser, self.api_key_disbursements
+        self.basic_authorisation_disbursements = str(encode(self.username, self.password))
+
+    def authToken(self):
+        url = f"{self.accurl}/disbursement/token/"
+        payload = {}
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
+            'Authorization': self.basic_authorisation_disbursements
+        }
+        response = requests.post(url, headers=headers, data=payload).json()
         return response
 
     def getBalance(self):
-        url = "/disbursement/v1_0/account/balance"
+        url = f"{self.base_url}/disbursement/v1_0/account/balance"
+        payload = {}
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.disbursements_subkey,
+            'Authorization':  "Bearer " + str(self.authToken()["access_token"]),
+            'X-Target-Environment': self.environment_mode,
+        }
+        response = requests.request("GET", url, headers=headers, data=payload)
+        json_respon = response.json()
+        return json_respon
 
-        return super(Disbursement, self).getBalance(url, super(Disbursement, self).config.disbursementsKey)
-
-    def getTransactionStatus(
-            self,
-            transaction_id,
-            **kwargs):
-        url = "/disbursement/v1_0/transfer/"
-
-        return super(Disbursement, self).getTransactionStatus(
-            transaction_id, url, super(Disbursement, self).config.disbursementsKey)
-
-    def transfer(
-            self,
-            amount,
-            mobile,
-            external_id,
-            payee_note="",
-            payer_message="",
-            currency=os.environ.get("CURRENCY"),
-            **kwargs):
-        ref = str(uuid.uuid4())
-        data = {
-            "amount": str(amount),
-            "currency": currency,
-            "externalId": external_id,
+    def transfer(self, amount, phone_number, payermessage):
+        url = f"{self.base_url}/disbursement/v1_0/transfer"
+        payload = json.dumps({
+            "amount": amount,
+            "currency": os.environ.get('CURRENCY'),
+            "externalId": str(uuid4()),
             "payee": {
                 "partyIdType": "MSISDN",
-                "partyId": validate_phone_number(mobile)
+                "partyId": phone_number
             },
-            "payerMessage": payer_message,
-            "payeeNote": payee_note
-        }
+            "payerMessage": payermessage,
+            "payeeNote": payermessage
+        })
+        
         headers = {
-            "X-Target-Environment": super(Disbursement, self).config.environment,
-            "Content-Type": "application/json",
-            "Ocp-Apim-Subscription-Key": super(Disbursement, self).config.disbursementsKey,
-            "X-Reference-Id": ref,
+            'X-Reference-Id': str(uuid4()),
+            'X-Target-Environment': self.environment_mode,
+            'Ocp-Apim-Subscription-Key': self.subscription_key,
+            'Content-Type': 'application/json',
+            'Authorization':  "Bearer " + str(self.authToken()["access_token"])
+            }
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch data from API. Status code: {response.status_code}, Error: {response.text}")
+    
+
+    def getTransactionStatus(self,txt_ref):
+
+        url = f"{self.base_url}/disbursement/v1_0/transfer/{txt_ref}"
+
+        payload = {}
+
+        headers = {
+            'X-Reference-Id': str(uuid4()),
+            'X-Target-Environment': self.environment_mode,
+            'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
+            'Content-Type': 'application/json',
+            'Authorization':  "Bearer " + str(self.authToken()["access_token"])
         }
-        if kwargs.get("callback_url"):
-            headers["X-Callback-Url"] = kwargs.get("callback_url")
-        url = "{0}/disbursement/v1_0/transfer".format(super(Disbursement, self).config.baseUrl)
-        self.request("POST", url, headers, data)
-        return {"transaction_ref": ref}
+
+        response = requests.request("GET", url, headers=headers, data=payload)
+        returneddata = response.json()
+
+        res = {
+            "response": response.status_code,
+            "ref": txt_ref,
+            "data": returneddata
+        }
+        return res
+    

@@ -10,10 +10,8 @@ from os.path import basename
 from os.path import dirname
 from os.path import join
 from os.path import splitext
-
 from setuptools import find_packages
 from setuptools import setup
-
 
 def read(*names, **kwargs):
     with io.open(
@@ -22,9 +20,8 @@ def read(*names, **kwargs):
     ) as fh:
         return fh.read()
 
-
 setup(
-    name='mtnmomo',
+    name='mtnmomoapi',
     version='0.0.1',
     license='MIT license',
     description='A lite Python wrapper for the MTN MoMo API.',
@@ -34,9 +31,9 @@ setup(
     ),
     long_description_content_type='text/markdown',
     author='sikaili99',
-    author_email='mugisha@sparkpl.ug',
+    author_email='sikaili99@gmail.com',
     url='https://github.com/sikaili99/lite-python-mtnmomo-api',
-    packages=find_packages('mtnmomo'),
+    packages=find_packages('mtnmomoapi'),
     package_dir={'': 'mtnmomo'},
     py_modules=[splitext(basename(path))[0] for path in glob('mtnmomo/*.py')],
     include_package_data=True,
@@ -65,22 +62,5 @@ setup(
     install_requires=[
         'requests == 2.21.0',
         'Click==7.0'
-    ],
-
-    setup_requires=["pytest-runner", "pytest-cov"],
-
-
-    extras_require={'test': ['pytest', 'pytest-watch', 'tox',
-                             'pytest-cov',
-                             'pytest-pep8',
-                             'pytest-cov',
-                             'pytest-sugar',
-                             'mock',
-                             'pytest-instafail',
-                             'pytest-bdd'], "dev": ["semver"]},
-    entry_points={
-        'console_scripts': [
-            'mtnmomo = mtnmomo.cli:main',
-        ]
-    },
+    ]
 )
