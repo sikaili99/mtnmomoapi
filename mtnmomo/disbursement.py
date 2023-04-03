@@ -91,9 +91,9 @@ class Disbursement:
             raise Exception(f"Failed to fetch data from API. Status code: {response.status_code}, Error: {response.text}")
     
 
-    def getTransactionStatus(self,txt_ref):
+    def getTransactionStatus(self,txn_ref):
 
-        url = f"{self.base_url}/disbursement/v1_0/transfer/{txt_ref}"
+        url = f"{self.base_url}/disbursement/v1_0/transfer/{txn_ref}"
 
         payload = {}
 
@@ -110,7 +110,7 @@ class Disbursement:
 
         res = {
             "response": response.status_code,
-            "ref": txt_ref,
+            "ref": txn_ref,
             "data": returneddata
         }
         return res

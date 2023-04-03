@@ -12,16 +12,16 @@ class Collection:
         self.api_key_collections = os.environ.get('COLLECTION_API_SECRET')
         self.collections_apiuser = os.environ.get('COLLECTION_USER_ID')
         self.environment_mode = os.environ.get('ENVIRONMENT')
-        self.accurl = "https://proxy.momoapi.mtn.com"
+        self.base_url = "https://proxy.momoapi.mtn.com"
         if self.environment_mode == "sandbox":
-            self.accurl = "https://sandbox.momodeveloper.mtn.com"
+            self.base_url = "https://sandbox.momodeveloper.mtn.com"
 
         # Generate Basic authorization key when in test mode
         if self.environment_mode == "sandbox":
             self.collections_apiuser = str(uuid4())
 
         # Create API user
-        self.url = f"{self.accurl}/v1_0/apiuser"
+        self.url = f"{self.base_url}/v1_0/apiuser"
         payload = json.dumps({
             "providerCallbackHost": os.environ.get('')
         })
@@ -41,7 +41,7 @@ class Collection:
         self.basic_authorisation_collections = str(encode(self.username, self.password))
 
     def authToken(self):
-        url = f"{self.accurl}/collection/token/"
+        url = f"{self.base_url}/collection/token/"
         payload = {}
         headers = {
             'Ocp-Apim-Subscription-Key': self.collections_primary_key,
@@ -52,7 +52,7 @@ class Collection:
 
     def requestToPay(self, amount, phone_number, external_id,payernote="SPARCO", payermessage="SPARCOPAY"):
         uuidgen = str(uuid4())
-        url = f"{self.accurl}/collection/v1_0/requesttopay"
+        url = f"{self.base_url}/collection/v1_0/requesttopay"
         payload = json.dumps({
             "amount": amount,
             "currency": os.environ.get('CURRENCY'),
@@ -77,7 +77,7 @@ class Collection:
         return context
 
     def getTransactionStatus(self, txn):
-        url = f"{self.accurl}/collection/v1_0/requesttopay/{txn}"
+        url = f"{self.base_url}/collection/v1_0/requesttopay/{txn}"
         payload = {}
         headers = {
             'Ocp-Apim-Subscription-Key': self.collections_primary_key,
@@ -91,7 +91,7 @@ class Collection:
 
     # Check momo collections balance
     def getBalance(self):
-        url = f"{self.accurl}/collection/v1_0/account/balance"
+        url = f"{self.base_url}/collection/v1_0/account/balance"
         payload = {}
         headers = {
             'Ocp-Apim-Subscription-Key': self.collections_primary_key,
