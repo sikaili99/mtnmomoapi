@@ -10,7 +10,7 @@ class Disbursement:
         self.disbursements_primary_key = os.environ('DISBURSEMENT_PRIMARY_KEY')
         self.disbursements_apiuser = os.environ('DISBURSEMENT_USER_ID')
         self.api_key_disbursements = os.environ('DISBURSEMENT_API_SECRET')
-        self.environment_mode = os.environ.get('ENVIRONMENT')
+        self.environment_mode = os.environ.get('MTN_ENVIRONMENT')
         self.base_url = os.environ.get('BASE_URL')
 
         if self.environment_mode == "sandbox":

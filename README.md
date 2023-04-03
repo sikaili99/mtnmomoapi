@@ -36,7 +36,7 @@ The full list of configuration options can be seen in the example below:
 
  ```python
  config = {
-    "ENVIRONMENT": os.environ.get("ENVIRONMENT"), 
+    "MTN_ENVIRONMENT": os.environ.get("MTN_ENVIRONMENT"), 
     "BASE_URL": os.environ.get("BASE_URL"), 
     "CALLBACK_HOST": os.environ.get("CALLBACK_HOST"), # Mandatory.
     "COLLECTION_PRIMARY_KEY": os.environ.get("COLLECTION_PRIMARY_KEY"), 

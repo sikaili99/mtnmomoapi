@@ -11,7 +11,7 @@ class Collection:
         self.collections_primary_key = os.environ.get('COLLECTION_PRIMARY_KEY')
         self.api_key_collections = os.environ.get('COLLECTION_API_SECRET')
         self.collections_apiuser = os.environ.get('COLLECTION_USER_ID')
-        self.environment_mode = os.environ.get('ENVIRONMENT')
+        self.environment_mode = os.environ.get('MTN_ENVIRONMENT')
         self.base_url = os.environ.get('BASE_URL')
         if self.environment_mode == "sandbox":
             self.base_url = "https://sandbox.momodeveloper.mtn.com"
@@ -86,7 +86,6 @@ class Collection:
         }
         response = requests.request("GET", url, headers=headers, data=payload)
         json_respon = response.json()
-        print("MTN request to pay status: ", json_respon)
         return json_respon
 
     # Check momo collections balance
