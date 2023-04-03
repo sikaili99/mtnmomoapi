@@ -62,18 +62,18 @@ class Disbursement:
         json_respon = response.json()
         return json_respon
 
-    def transfer(self, amount, phone_number, payermessage):
+    def transfer(self, amount, phone_number, external_id,payermessage='',payermessageNone=''):
         url = f"{self.base_url}/disbursement/v1_0/transfer"
         payload = json.dumps({
-            "amount": amount,
+            "amount": str(amount),
             "currency": os.environ.get('CURRENCY'),
-            "externalId": str(uuid4()),
+            "externalId": str(external_id),
             "payee": {
                 "partyIdType": "MSISDN",
                 "partyId": phone_number
             },
             "payerMessage": payermessage,
-            "payeeNote": payermessage
+            "payeeNote": payermessageNone
         })
         
         headers = {
