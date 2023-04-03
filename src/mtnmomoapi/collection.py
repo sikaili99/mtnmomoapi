@@ -101,4 +101,3 @@ class Collection:
         response = requests.request("GET", url, headers=headers, data=payload)
         json_respon = response.json()
         return json_respon
-    
