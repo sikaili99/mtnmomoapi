@@ -1,5 +1,5 @@
-from mtnmomo.collection import Collection
-from mtnmomo.disbursement import Disbursement
+from mtnmomoapi.collection import Collection
+from mtnmomoapi.disbursement import Disbursement
 
 
 def collection(amount,mobile_number):

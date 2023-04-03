@@ -12,7 +12,7 @@ class Collection:
         self.api_key_collections = os.environ.get('COLLECTION_API_SECRET')
         self.collections_apiuser = os.environ.get('COLLECTION_USER_ID')
         self.environment_mode = os.environ.get('ENVIRONMENT')
-        self.base_url = "https://proxy.momoapi.mtn.com"
+        self.base_url = os.environ.get('BASE_URL')
         if self.environment_mode == "sandbox":
             self.base_url = "https://sandbox.momodeveloper.mtn.com"
 
