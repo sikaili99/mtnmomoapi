@@ -82,7 +82,7 @@ class Disbursement:
             'X-Reference-Id': str(uuid4()),
             'X-Target-Environment': self.environment_mode,
             'X-Callback-Url': self.callback_url,
-            'Ocp-Apim-Subscription-Key': self.subscription_key,
+            'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
             'Content-Type': 'application/json',
             'Authorization':  "Bearer " + str(self.authToken()["access_token"])
             }
