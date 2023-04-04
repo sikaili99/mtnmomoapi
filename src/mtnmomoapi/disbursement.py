@@ -7,11 +7,13 @@ from basicauth import encode
 
 class Disbursement:
     def __init__(self):
-        self.disbursements_primary_key = os.environ('DISBURSEMENT_PRIMARY_KEY')
-        self.disbursements_apiuser = os.environ('DISBURSEMENT_USER_ID')
-        self.api_key_disbursements = os.environ('DISBURSEMENT_API_SECRET')
+        self.disbursements_primary_key = os.environ.get('DISBURSEMENT_PRIMARY_KEY')
+        self.api_key_disbursements = os.environ.get('DISBURSEMENT_API_SECRET')
+        self.disbursements_apiuser = os.environ.get('DISBURSEMENT_USER_ID')
         self.environment_mode = os.environ.get('MTN_ENVIRONMENT')
+        self.callback_url = os.environ.get('CALLBACK_URL')
         self.base_url = os.environ.get('BASE_URL')
+        
 
         if self.environment_mode == "sandbox":
             self.base_url = "https://sandbox.momodeveloper.mtn.com"
@@ -21,7 +23,7 @@ class Disbursement:
             self.disbursements_apiuser = str(uuid4())
 
         # Create API user
-        self.url = f"{self.accurl}/v1_0/apiuser"
+        self.url = f"{self.base_url}/v1_0/apiuser"
         payload = json.dumps({
             "providerCallbackHost": os.environ.get('')
         })
@@ -41,7 +43,7 @@ class Disbursement:
         self.basic_authorisation_disbursements = str(encode(self.username, self.password))
 
     def authToken(self):
-        url = f"{self.accurl}/disbursement/token/"
+        url = f"{self.base_url}/disbursement/token/"
         payload = {}
         headers = {
             'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
@@ -79,11 +81,16 @@ class Disbursement:
         headers = {
             'X-Reference-Id': str(uuid4()),
             'X-Target-Environment': self.environment_mode,
+            'X-Callback-Url': self.callback_url,
             'Ocp-Apim-Subscription-Key': self.subscription_key,
             'Content-Type': 'application/json',
             'Authorization':  "Bearer " + str(self.authToken()["access_token"])
             }
-        response = requests.post(url, headers=headers, json=payload)
+        proxies = {
+            "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
+            "https": os.environ.get('QUOTAGUARDSTATIC_URL')
+            }
+        response = requests.post(url, headers=headers, json=payload, proxies=proxies)
 
         if response.status_code == 200:
             return response.json()
@@ -105,7 +112,12 @@ class Disbursement:
             'Authorization':  "Bearer " + str(self.authToken()["access_token"])
         }
 
-        response = requests.request("GET", url, headers=headers, data=payload)
+        proxies = {
+            "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
+            "https": os.environ.get('QUOTAGUARDSTATIC_URL')
+            }
+
+        response = requests.request("GET", url, headers=headers, data=payload, proxies=proxies)
         returneddata = response.json()
 
         res = {

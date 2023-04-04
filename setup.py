@@ -10,7 +10,7 @@ with open("README.md", "r", encoding = "utf-8") as fh:
 
 setup(
     name='mtnmomoapi',
-    version='0.0.1',
+    version='0.0.6',
     license='MIT license',
     author = "Mathews Musukuma",
     author_email = "sikaili99@gmail.com",

@@ -38,7 +38,8 @@ The full list of configuration options can be seen in the example below:
  config = {
     "MTN_ENVIRONMENT": os.environ.get("MTN_ENVIRONMENT"), 
     "BASE_URL": os.environ.get("BASE_URL"), 
-    "CALLBACK_HOST": os.environ.get("CALLBACK_HOST"), # Mandatory.
+    "CALLBACK_HOST": os.environ.get("CALLBACK_HOST"), # Mandatory. SANDBOX
+    "CALLBACK_URL": os.environ.get("CALLBACK_URL"),
     "COLLECTION_PRIMARY_KEY": os.environ.get("COLLECTION_PRIMARY_KEY"), 
     "COLLECTION_USER_ID": os.environ.get("COLLECTION_USER_ID"),
     "COLLECTION_API_SECRET": os.environ.get("COLLECTION_API_SECRET"),
@@ -64,7 +65,6 @@ The collections client can be created with the following paramaters. Note that t
 You can create a collection client with the following:
 
 ```python
-import os
 from mtnmomo.collection import Collection
 
 client = Collection()
@@ -85,7 +85,6 @@ client = Collection()
 ### Sample Code
 
 ```python
-import os
 from mtnmomo.collection import Collection
 
 client = Collection()
@@ -104,7 +103,6 @@ The Disbursements client can be created with the following paramaters. Note that
 You can create a disbursements client with the following
 
 ```python
-import os
 from mtnmomo.disbursement import Disbursement
 
 client = Disbursement()
@@ -125,7 +123,6 @@ client = Disbursement()
 #### Sample Code
 
 ```python
-import os
 from mtnmomo.disbursement import Disbursement
 
 client = Disbursement()

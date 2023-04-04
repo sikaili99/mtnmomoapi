@@ -12,7 +12,9 @@ class Collection:
         self.api_key_collections = os.environ.get('COLLECTION_API_SECRET')
         self.collections_apiuser = os.environ.get('COLLECTION_USER_ID')
         self.environment_mode = os.environ.get('MTN_ENVIRONMENT')
+        self.callback_url = os.environ.get('CALLBACK_URL')
         self.base_url = os.environ.get('BASE_URL')
+        
         if self.environment_mode == "sandbox":
             self.base_url = "https://sandbox.momodeveloper.mtn.com"
 
@@ -67,6 +69,7 @@ class Collection:
         headers = {
             'X-Reference-Id': uuidgen,
             'X-Target-Environment': self.environment_mode,
+            'X-Callback-Url': self.callback_url,
             'Ocp-Apim-Subscription-Key': self.collections_primary_key,
             'Content-Type': 'application/json',
             'Authorization': "Bearer " + str(self.authToken()["access_token"])
