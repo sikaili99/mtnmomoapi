@@ -1,133 +1,450 @@
-# MTN MoMo API Python Client</h1>
+# MTN MoMo API Python Client
 
 <strong>Power your apps with Python MTN MoMo API</strong>
-
-# Usage
 
 ## Installation
 
 Add the latest version of the library to your project:
 
 ```bash
- $ pip install mtnmomoapi
+pip install mtnmomoapi
 ```
 
 This library supports Python 2.7+ or Python 3.4+
 
-# Sandbox Environment
-
-## Creating a sandbox environment API user 
-
-Next, we need to get the `User ID` and `User Secret` and to do this we shall need to use the Primary Key for the Product to which we are subscribed, as well as specify a host. The library ships with a commandline application that helps to create sandbox credentials. It assumes you have created an account on `https://momodeveloper.mtn.com` and have your `Ocp-Apim-Subscription-Key`. 
-
-These are the credentials we shall use for the sandbox environment. In production, these credentials are provided for you on the MTN OVA management dashboard after KYC requirements are met.
-
 ## Configuration
 
-Before we can fully utilize the library, we need to specify global configurations. The global configuration must contain the following:
+Before using the API, set up your environment variables:
 
-* `BASE_URL`: An optional base url to the MTN Momo API. By default the staging base url will be used
-* `ENVIRONMENT`: Optional environment, either "sandbox" or "production". Default is 'sandbox'
-* `CALLBACK_HOST`: The domain where you webhooks urls are hosted. This is mandatory.
+```bash
+# Base Configuration
+export MTN_ENVIRONMENT="sandbox"  # or "mtnzambia" for production in Zambia
+export BASE_URL="https://proxy.momoapi.mtn.com"  # Production URL
+export CALLBACK_HOST="https://your-domain.com"
+export CURRENCY="ZMW"  # "EUR" for sandbox, "ZMW" for Zambia production
 
-Once you have specified the global variables, you can now provide the product-specific variables. Each MoMo API product requires its own authentication details i.e its own `Subscription Key`, `User ID` and `User Secret`, also sometimes refered to as the `API Secret`. As such, we have to configure subscription keys for each product you will be using. 
+# Collection API Keys
+export COLLECTION_PRIMARY_KEY="your-primary-key"
+export COLLECTION_USER_ID="your-user-id"
+export COLLECTION_API_SECRET="your-api-secret"
 
-The full list of configuration options can be seen in the example below:
-
- ```python
- config = {
-    "MTN_ENVIRONMENT": os.environ.get("MTN_ENVIRONMENT"), 
-    "BASE_URL": os.environ.get("BASE_URL"), 
-    "CALLBACK_HOST": os.environ.get("CALLBACK_HOST"), # Mandatory. SANDBOX
-    "CALLBACK_URL": os.environ.get("CALLBACK_URL"),
-    "COLLECTION_PRIMARY_KEY": os.environ.get("COLLECTION_PRIMARY_KEY"), 
-    "COLLECTION_USER_ID": os.environ.get("COLLECTION_USER_ID"),
-    "COLLECTION_API_SECRET": os.environ.get("COLLECTION_API_SECRET"),
-    "REMITTANCE_USER_ID": os.environ.get("REMITTANCE_USER_ID"), 
-    "REMITTANCE_API_SECRET": os.environ.get("REMITTANCE_API_SECRET"),
-    "REMITTANCE_PRIMARY_KEY": os.envieon.get("REMITTANCE_PRIMARY_KEY"),
-    "DISBURSEMENT_USER_ID": os.environ.get("DISBURSEMENT_USER_ID"), 
-    "DISBURSEMENT_API_SECRET": os.environ.get("DISBURSEMENTS_API_SECRET"),
-    "DISBURSEMENT_PRIMARY_KEY": os.environ.get("DISBURSEMENT_PRIMARY_KEY"), 
-}
+# Disbursement API Keys
+export DISBURSEMENT_PRIMARY_KEY="your-primary-key"
+export DISBURSEMENT_USER_ID="your-user-id"
+export DISBURSEMENT_API_SECRET="your-api-secret"
 ```
 
-You will only need to configure the variables for the product(s) you will be using.
+## Basic Usage Examples
 
-## Collections
-
-The collections client can be created with the following paramaters. Note that the `COLLECTION_USER_ID` and `COLLECTION_API_SECRET` for production are provided on the MTN OVA dashboard;
-
-* `COLLECTION_PRIMARY_KEY`: Primary Key for the `Collection` product on the developer portal.
-* `COLLECTION_USER_ID`: For sandbox, use the one generated with the `mtnmomo` command.
-* `COLLECTION_API_SECRET`: For sandbox, use the one generated with the `mtnmomo` command.
-
-You can create a collection client with the following:
+### 1. Simple Collection Request
 
 ```python
-from mtnmomo.collection import Collection
+from mtnmomoapi.collection import Collection
 
-client = Collection()
+# Initialize the collection client
+collection = Collection()
+
+# Request payment
+try:
+    response = collection.requestToPay(
+        amount="100",
+        phone_number="260966456787",
+        external_id="order-123",
+        payee_note="Payment for Order #123",
+        payer_message="Please pay for your order"
+    )
+    print(f"Transaction Reference: {response['transaction_ref']}")
+except Exception as e:
+    print(f"Error: {str(e)}")
 ```
 
-### Methods
-
-1. `requestToPay`: This operation is used to request a payment from a consumer (Payer). The payer will be asked to authorize the payment. The transaction is executed once the payer has authorized the payment. The transaction will be in status PENDING until it is authorized or declined by the payer or it is timed out by the system. Status of the transaction can be validated by using `getTransactionStatus`.
-
-2. `getTransactionStatus`: Retrieve transaction information using the `transactionId` returned by `requestToPay`. You can invoke it at intervals until the transaction fails or succeeds. If the transaction has failed, it will throw an appropriate error. 
-
-3. `getBalance`: Get the balance of the account.
-
-### TODO: create this methode
-
-`isPayerActive`: check if an account holder is registered and active in the system.
-
-### Sample Code
+### 2. Simple Disbursement
 
 ```python
-from mtnmomo.collection import Collection
+from mtnmomoapi.disbursement import Disbursement
 
-client = Collection()
+# Initialize the disbursement client
+disbursement = Disbursement()
 
-response = client.requestToPay(amount="600", phone_number="0966456787", external_id="123456789", payee_note="dd", payer_message="dd", currency="EUR")
+# Transfer money
+try:
+    response = disbursement.transfer(
+        amount="50",
+        phone_number="260966456787",
+        external_id="payout-123",
+        payee_note="Refund for Order #123",
+        payer_message="Your refund has been processed"
+    )
+    print(f"Transaction Reference: {response['transaction_ref']}")
+except Exception as e:
+    print(f"Error: {str(e)}")
 ```
 
-## Disbursement
+## Real-World Integration Examples
 
-The Disbursements client can be created with the following paramaters. Note that the `DISBURSEMENT_USER_ID` and `DISBURSEMENT_API_SECRET` for production are provided on the MTN OVA dashboard;
-
-* `DISBURSEMENT_PRIMARY_KEY`: Primary Key for the `Disbursement` product on the developer portal.
-* `DISBURSEMENT_USER_ID`: For sandbox, use the one generated with the `mtnmomo` command.
-* `DISBURSEMENT_API_SECRET`: For sandbox, use the one generated with the `mtnmomo` command.
-
-You can create a disbursements client with the following
+### 1. E-commerce Payment Processing
 
 ```python
-from mtnmomo.disbursement import Disbursement
+from mtnmomoapi.collection import Collection
+from typing import Dict, Any
+import time
 
-client = Disbursement()
+class EcommercePaymentProcessor:
+    def __init__(self):
+        self.collection = Collection()
+        
+    def process_order_payment(self, order_id: str, amount: str, customer_phone: str) -> Dict[str, Any]:
+        try:
+            # Request payment
+            payment = self.collection.requestToPay(
+                amount=amount,
+                phone_number=customer_phone,
+                external_id=f"order-{order_id}",
+                payee_note=f"Payment for Order #{order_id}",
+                payer_message="Please confirm payment for your order"
+            )
+            
+            # Check payment status (with timeout)
+            max_checks = 10
+            check_interval = 5  # seconds
+            
+            for _ in range(max_checks):
+                status = self.collection.getTransactionStatus(payment['transaction_ref'])
+                
+                if status.get('status') == 'SUCCESSFUL':
+                    return {
+                        'success': True,
+                        'order_id': order_id,
+                        'transaction_id': payment['transaction_ref'],
+                        'status': 'paid'
+                    }
+                elif status.get('status') == 'FAILED':
+                    return {
+                        'success': False,
+                        'order_id': order_id,
+                        'error': 'Payment failed',
+                        'status': 'failed'
+                    }
+                
+                time.sleep(check_interval)
+            
+            return {
+                'success': False,
+                'order_id': order_id,
+                'error': 'Payment timeout',
+                'status': 'timeout'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'order_id': order_id,
+                'error': str(e),
+                'status': 'error'
+            }
+
+# Usage
+processor = EcommercePaymentProcessor()
+result = processor.process_order_payment(
+    order_id="12345",
+    amount="150.00",
+    customer_phone="260966456787"
+)
 ```
 
-### Methods
-
-1. `transfer`: Used to transfer an amount from the owner’s account to a payee account. Status of the transaction can be validated by using the `getTransactionStatus` method.
-
-2. `getTransactionStatus`: Retrieve transaction information using the `transactionId` returned by `transfer`. You can invoke it at intervals until the transaction fails or succeeds.
-
-2. `getBalance`: Get your account balance.
-
-### TODO: create this methode
-
-`isPayerActive`: This method is used to check if an account holder is registered and active in the system.
-
-#### Sample Code
+### 2. Salary Disbursement System
 
 ```python
-from mtnmomo.disbursement import Disbursement
+from mtnmomoapi.disbursement import Disbursement
+from typing import List, Dict
+import logging
 
-client = Disbursement()
-response = client.transfer(amount="600", phone_number="0966456787", external_id="123456789", payee_note="dd",      payer_message="dd", currency="EUR")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+class SalaryDisbursementSystem:
+    def __init__(self):
+        self.disbursement = Disbursement()
+        
+    def check_available_balance(self) -> float:
+        try:
+            balance = self.disbursement.getBalance()
+            return float(balance.get('availableBalance', 0))
+        except Exception as e:
+            logger.error(f"Failed to get balance: {str(e)}")
+            raise
+            
+    def process_payroll(self, payments: List[Dict[str, str]]) -> Dict[str, List]:
+        successful_payments = []
+        failed_payments = []
+        
+        # Check total required amount
+        total_amount = sum(float(payment['amount']) for payment in payments)
+        available_balance = self.check_available_balance()
+        
+        if available_balance < total_amount:
+            raise ValueError(f"Insufficient balance. Required: {total_amount}, Available: {available_balance}")
+        
+        for payment in payments:
+            try:
+                # Process individual salary payment
+                transfer = self.disbursement.transfer(
+                    amount=payment['amount'],
+                    phone_number=payment['phone_number'],
+                    external_id=f"salary-{payment['employee_id']}",
+                    payee_note=f"Salary for {payment['name']}",
+                    payer_message="Monthly salary payment"
+                )
+                
+                # Check transfer status
+                status = self.disbursement.getTransactionStatus(transfer['transaction_ref'])
+                
+                if status.get('status') == 'SUCCESSFUL':
+                    successful_payments.append({
+                        'employee_id': payment['employee_id'],
+                        'amount': payment['amount'],
+                        'transaction_ref': transfer['transaction_ref']
+                    })
+                else:
+                    failed_payments.append({
+                        'employee_id': payment['employee_id'],
+                        'amount': payment['amount'],
+                        'error': 'Transfer failed'
+                    })
+                    
+            except Exception as e:
+                logger.error(f"Failed to process payment for employee {payment['employee_id']}: {str(e)}")
+                failed_payments.append({
+                    'employee_id': payment['employee_id'],
+                    'amount': payment['amount'],
+                    'error': str(e)
+                })
+                
+        return {
+            'successful': successful_payments,
+            'failed': failed_payments
+        }
+
+# Usage Example
+payroll_system = SalaryDisbursementSystem()
+
+payments = [
+    {
+        'employee_id': 'EMP001',
+        'name': 'John Doe',
+        'amount': '1500.00',
+        'phone_number': '260966456787'
+    },
+    {
+        'employee_id': 'EMP002',
+        'name': 'Jane Smith',
+        'amount': '2000.00',
+        'phone_number': '260966456788'
+    }
+]
+
+try:
+    result = payroll_system.process_payroll(payments)
+    print(f"Successful payments: {len(result['successful'])}")
+    print(f"Failed payments: {len(result['failed'])}")
+except ValueError as e:
+    print(f"Error: {str(e)}")
 ```
 
-Keep coding!
+### 3. Subscription Payment System
+
+```python
+from mtnmomoapi.collection import Collection
+from datetime import datetime, timedelta
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class SubscriptionManager:
+    def __init__(self):
+        self.collection = Collection()
+        
+    def process_subscription_payment(
+        self,
+        subscriber_id: str,
+        phone_number: str,
+        plan_amount: str,
+        plan_name: str
+    ) -> Dict[str, Any]:
+        try:
+            # Generate unique payment reference
+            payment_ref = f"sub-{subscriber_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            
+            # Request payment
+            payment = self.collection.requestToPay(
+                amount=plan_amount,
+                phone_number=phone_number,
+                external_id=payment_ref,
+                payee_note=f"Subscription renewal: {plan_name}",
+                payer_message=f"Please confirm payment for {plan_name} subscription"
+            )
+            
+            # Monitor payment status
+            max_attempts = 5
+            attempt = 0
+            
+            while attempt < max_attempts:
+                status = self.collection.getTransactionStatus(payment['transaction_ref'])
+                
+                if status.get('status') == 'SUCCESSFUL':
+                    next_renewal = datetime.now() + timedelta(days=30)
+                    return {
+                        'success': True,
+                        'subscriber_id': subscriber_id,
+                        'transaction_ref': payment['transaction_ref'],
+                        'plan_name': plan_name,
+                        'amount_paid': plan_amount,
+                        'next_renewal_date': next_renewal.strftime('%Y-%m-%d'),
+                        'status': 'active'
+                    }
+                elif status.get('status') == 'FAILED':
+                    return {
+                        'success': False,
+                        'subscriber_id': subscriber_id,
+                        'error': 'Payment failed',
+                        'status': 'payment_failed'
+                    }
+                
+                attempt += 1
+                time.sleep(5)
+            
+            return {
+                'success': False,
+                'subscriber_id': subscriber_id,
+                'error': 'Payment timeout',
+                'status': 'timeout'
+            }
+            
+        except Exception as e:
+            logger.error(f"Subscription payment failed for {subscriber_id}: {str(e)}")
+            return {
+                'success': False,
+                'subscriber_id': subscriber_id,
+                'error': str(e),
+                'status': 'error'
+            }
+
+# Usage Example
+subscription_manager = SubscriptionManager()
+
+result = subscription_manager.process_subscription_payment(
+    subscriber_id="SUB123",
+    phone_number="260966456787",
+    plan_amount="50.00",
+    plan_name="Premium Monthly"
+)
+
+if result['success']:
+    print(f"Subscription renewed successfully. Next renewal: {result['next_renewal_date']}")
+else:
+    print(f"Subscription renewal failed: {result['error']}")
+```
+
+## Best Practices
+
+1. **Error Handling**
+   - Always wrap API calls in try-except blocks
+   - Log errors for debugging
+   - Provide meaningful error messages to users
+
+2. **Transaction Monitoring**
+   - Implement retry logic for status checks
+   - Set appropriate timeouts
+   - Store transaction references for reconciliation
+
+3. **Security**
+   - Never expose API keys in client-side code
+   - Validate input data
+   - Use HTTPS for callbacks
+
+4. **Performance**
+   - Implement caching where appropriate
+   - Use asynchronous processing for bulk operations
+   - Set up monitoring for API limits
+
+## Common Issues and Solutions
+
+1. **Transaction Timeout**
+   ```python
+   # Implement exponential backoff
+   def check_transaction_with_backoff(transaction_ref, max_attempts=5):
+       for attempt in range(max_attempts):
+           try:
+               status = collection.getTransactionStatus(transaction_ref)
+               if status.get('status') in ['SUCCESSFUL', 'FAILED']:
+                   return status
+           except Exception:
+               wait_time = (2 ** attempt) * 1  # exponential backoff
+               time.sleep(wait_time)
+       return {'status': 'TIMEOUT'}
+   ```
+
+2. **Balance Check**
+   ```python
+   def ensure_sufficient_balance(amount):
+       try:
+           balance = disbursement.getBalance()
+           available = float(balance.get('availableBalance', 0))
+           required = float(amount)
+           if available < required:
+               raise ValueError(f"Insufficient balance: {available} < {required}")
+           return True
+       except Exception as e:
+           logger.error(f"Balance check failed: {str(e)}")
+           raise
+   ```
+
+3. **Input Validation**
+   ```python
+   def validate_phone_number(phone):
+       # Adjust pattern based on your country's format
+       pattern = r'^26096\d{7}$'
+       if not re.match(pattern, phone):
+           raise ValueError("Invalid phone number format")
+       return True
+   ```
+
+## Testing
+
+```python
+import unittest
+from unittest.mock import patch
+from mtnmomoapi.collection import Collection
+
+class TestMomoAPI(unittest.TestCase):
+    def setUp(self):
+        self.collection = Collection()
+        
+    @patch('mtnmomoapi.collection.Collection.requestToPay')
+    def test_payment_request(self, mock_request):
+        mock_request.return_value = {
+            'status_code': 202,
+            'transaction_ref': 'test-ref'
+        }
+        
+        response = self.collection.requestToPay(
+            amount="100",
+            phone_number="260966456787",
+            external_id="test-123"
+        )
+        
+        self.assertEqual(response['status_code'], 202)
+        self.assertTrue('transaction_ref' in response)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+## Support
+
+For issues and feature requests, please visit our [GitHub repository](https://github.com/sikaili99/mtnmomoapi/issues).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
