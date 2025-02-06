@@ -4,125 +4,148 @@ import requests
 from uuid import uuid4
 from basicauth import encode
 
-
 class Disbursement:
     def __init__(self):
         self.disbursements_primary_key = os.environ.get('DISBURSEMENT_PRIMARY_KEY')
         self.api_key_disbursements = os.environ.get('DISBURSEMENT_API_SECRET')
         self.disbursements_apiuser = os.environ.get('DISBURSEMENT_USER_ID')
-        self.environment_mode = os.environ.get('MTN_ENVIRONMENT')
+        self.environment_mode = os.environ.get('MTN_ENVIRONMENT', 'sandbox')
         self.callback_url = os.environ.get('CALLBACK_URL')
-        self.base_url = os.environ.get('BASE_URL')
-        
+        self.base_url = os.environ.get('BASE_URL', 'https://sandbox.momodeveloper.mtn.com')
+        self.currency = os.environ.get('CURRENCY', 'EUR')
 
-        if self.environment_mode == "sandbox":
-            self.base_url = "https://sandbox.momodeveloper.mtn.com"
+        if not all([self.disbursements_primary_key, self.callback_url]):
+            raise ValueError("Missing required environment variables")
 
         # Generate Basic authorization key when in test mode
         if self.environment_mode == "sandbox":
             self.disbursements_apiuser = str(uuid4())
+            self._create_api_user()
 
-        # Create API user
-        self.url = f"{self.base_url}/v1_0/apiuser"
-        payload = json.dumps({
-            "providerCallbackHost": os.environ.get('')
-        })
-        self.headers = {
+        # Create basic key for disbursements
+        self.username = self.disbursements_apiuser
+        self.password = self.api_key_disbursements
+        self.basic_authorisation_disbursements = str(encode(self.username, self.password))
+        self._auth_token = None
+
+    def _create_api_user(self):
+        url = f"{self.base_url}/v1_0/apiuser"
+        payload = {"providerCallbackHost": self.callback_url}
+        headers = {
             'X-Reference-Id': self.disbursements_apiuser,
             'Content-Type': 'application/json',
             'Ocp-Apim-Subscription-Key': self.disbursements_primary_key
         }
-        response = requests.post(self.url, headers=self.headers, data=payload)
-
-        # Auto-generate when in test mode
-        if self.environment_mode == "sandbox":
-            self.api_key_disbursements = str(response["apiKey"])
-
-        # Create basic key for disbursements
-        self.username, self.password = self.disbursements_apiuser, self.api_key_disbursements
-        self.basic_authorisation_disbursements = str(encode(self.username, self.password))
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            if self.environment_mode == "sandbox":
+                self.api_key_disbursements = response.json().get("apiKey")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to create API user: {str(e)}")
 
     def authToken(self):
+        if self._auth_token:
+            return self._auth_token
+
         url = f"{self.base_url}/disbursement/token/"
-        payload = {}
         headers = {
             'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
             'Authorization': self.basic_authorisation_disbursements
         }
-        response = requests.post(url, headers=headers, data=payload).json()
-        return response
+        try:
+            response = requests.post(url, headers=headers)
+            response.raise_for_status()
+            self._auth_token = response.json()
+            return self._auth_token
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get auth token: {str(e)}")
 
     def getBalance(self):
         url = f"{self.base_url}/disbursement/v1_0/account/balance"
-        payload = {}
         headers = {
-            'Ocp-Apim-Subscription-Key': self.disbursements_subkey,
-            'Authorization':  "Bearer " + str(self.authToken()["access_token"]),
+            'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
+            'Authorization': f"Bearer {self.authToken()['access_token']}",
             'X-Target-Environment': self.environment_mode,
         }
-        response = requests.request("GET", url, headers=headers, data=payload)
-        json_respon = response.json()
-        return json_respon
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get balance: {str(e)}")
 
-    def transfer(self, amount, phone_number, external_id,payermessage='',payermessageNone=''):
+    def transfer(self, amount, phone_number, external_id, payer_message='', payee_note=''):
+        if not all([amount, phone_number, external_id]):
+            raise ValueError("Missing required parameters")
+
+        transaction_ref = str(uuid4())
         url = f"{self.base_url}/disbursement/v1_0/transfer"
-        payload = json.dumps({
+        payload = {
             "amount": str(amount),
-            "currency": os.environ.get('CURRENCY'),
+            "currency": self.currency,
             "externalId": str(external_id),
             "payee": {
                 "partyIdType": "MSISDN",
                 "partyId": phone_number
             },
-            "payerMessage": payermessage,
-            "payeeNote": payermessageNone
-        })
+            "payerMessage": payer_message,
+            "payeeNote": payee_note
+        }
         
         headers = {
-            'X-Reference-Id': str(uuid4()),
+            'X-Reference-Id': transaction_ref,
             'X-Target-Environment': self.environment_mode,
             'X-Callback-Url': self.callback_url,
             'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
             'Content-Type': 'application/json',
-            'Authorization':  "Bearer " + str(self.authToken()["access_token"])
+            'Authorization': f"Bearer {self.authToken()['access_token']}"
+        }
+
+        proxies = None
+        if os.environ.get('QUOTAGUARDSTATIC_URL'):
+            proxies = {
+                "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
+                "https": os.environ.get('QUOTAGUARDSTATIC_URL')
             }
-        proxies = {
-            "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
-            "https": os.environ.get('QUOTAGUARDSTATIC_URL')
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, proxies=proxies)
+            response.raise_for_status()
+            return {
+                "status_code": response.status_code,
+                "transaction_ref": transaction_ref
             }
-        response = requests.post(url, headers=headers, json=payload, proxies=proxies)
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Transfer failed: {str(e)}")
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Failed to fetch data from API. Status code: {response.status_code}, Error: {response.text}")
-    
+    def getTransactionStatus(self, transaction_ref):
+        if not transaction_ref:
+            raise ValueError("Transaction reference is required")
 
-    def getTransactionStatus(self,txn_ref):
-
-        url = f"{self.base_url}/disbursement/v1_0/transfer/{txn_ref}"
-
-        payload = {}
-
+        url = f"{self.base_url}/disbursement/v1_0/transfer/{transaction_ref}"
         headers = {
-            'X-Reference-Id': str(uuid4()),
             'X-Target-Environment': self.environment_mode,
             'Ocp-Apim-Subscription-Key': self.disbursements_primary_key,
             'Content-Type': 'application/json',
-            'Authorization':  "Bearer " + str(self.authToken()["access_token"])
+            'Authorization': f"Bearer {self.authToken()['access_token']}"
         }
 
-        proxies = {
-            "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
-            "https": os.environ.get('QUOTAGUARDSTATIC_URL')
+        proxies = None
+        if os.environ.get('QUOTAGUARDSTATIC_URL'):
+            proxies = {
+                "http": os.environ.get('QUOTAGUARDSTATIC_URL'),
+                "https": os.environ.get('QUOTAGUARDSTATIC_URL')
             }
 
-        response = requests.request("GET", url, headers=headers, data=payload, proxies=proxies)
-        returneddata = response.json()
-
-        res = {
-            "response": response.status_code,
-            "ref": txn_ref,
-            "data": returneddata
-        }
-        return res
+        try:
+            response = requests.get(url, headers=headers, proxies=proxies)
+            response.raise_for_status()
+            return {
+                "status_code": response.status_code,
+                "transaction_ref": transaction_ref,
+                "data": response.json()
+            }
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get transaction status: {str(e)}")
+            
